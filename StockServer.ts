@@ -30,6 +30,13 @@ export class StockServer {
     }
 
     OnMessageReceived(eMsg: IEventMessage) {
+        if(eMsg.MessageType !== 'login' && this.Clients[eMsg.SocketId]===undefined){
+            this.SocketService.SendMessage(eMsg.SocketId,'relogin',null);
+            return;
+        }
+        else{
+            
+        }
         switch (eMsg.MessageType) {
             case 'login':
                 this.OnLoginRequested(eMsg);
@@ -65,15 +72,6 @@ export class StockServer {
         loginResp.ConnectionId = clientData.SocketId;
         loginResp.User = clientData.User;
         this.SendMessage(c.User, 'loginStatus', loginResp);
-
-        setTimeout(() => {
-            this.marketDataService.SendMarketDataTo(clientData.SocketId);
-        }, 0);
-
-        setTimeout(() => {
-            this.OnGetOrdersReceived(eMsg);
-        }, 0);
-
     }
 
     OnQuoteReceived = (eMsg: IEventMessage) => {
@@ -98,6 +96,10 @@ export class StockServer {
                 orders = orders.concat(element.CancelOrders.filter(o => o.User == user));
             });
             this.SendMessage(user, 'GetOrdersResponse', orders);
+        }, 0);
+
+         setTimeout(() => {
+            this.marketDataService.SendMarketDataTo(eMsg.SocketId);
         }, 0);
 
     }
