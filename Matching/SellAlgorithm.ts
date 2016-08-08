@@ -2,9 +2,10 @@ import { IQuote, Order, OrderType, ExecutionType, Fill, OrderStatus } from './..
 import {MarketDataService, PriceType} from './../MarketDataService/MarketDataService'
 import {OrderList} from './OrderList'
 import {Sorter} from './Sorter'
+import {FillState} from './BuyAlgorithm'
 import {StockServer} from './../StockServer'
 
-export class BuyAlgorithm {
+export class SellAlgorithm {
     marketDataService: MarketDataService;
     stockServer: StockServer;
 
@@ -13,65 +14,66 @@ export class BuyAlgorithm {
         this.stockServer = stockServer;
     }
 
-    RunMatching(buy: Order, orders: OrderList) {
-        let last: number = this.marketDataService.LastPrice(buy.Symbol);
-        let filledSellOrders: Order[] = new Array<Order>();
-        if (orders.IsSellSortRequired) {
-            Sorter.SortAscending(orders.SellOrders, last);
-           // orders.IsSellSortRequired = false;
+    RunMatching(sell: Order, orders: OrderList) {
+        let last: number = this.marketDataService.LastPrice(sell.Symbol);
+        let filledBuyOrders: Order[] = new Array<Order>();
+        if (orders.IsBuySortRequired) {
+            Sorter.SortAscending(orders.BuyOrders, last);
+            //orders.IsBuySortRequired = false;
         }
 
-        for (let i = 0; i < orders.SellOrders.length && buy.RemainingQuantity > 0; i++) {
-            let sell = orders.SellOrders[i];
-            if (buy.OrderType !== OrderType.Market && buy.Price > sell.Price)
+        for (let i = orders.BuyOrders.length - 1; i >= 0 && sell.RemainingQuantity > 0; i--) {
+            let buy = orders.BuyOrders[i];
+            if (sell.OrderType !== OrderType.Market && sell.Price > buy.Price)
                 break;
-            if(buy.OrderType == OrderType.Specific && sell.OrderType === OrderType.Specific)
+            if (buy.OrderType == OrderType.Specific && sell.OrderType === OrderType.Specific)
                 continue;
+
 
             let fillState: FillState = this.FillOrder(buy, sell, last);
             switch (fillState) {
                 case FillState.BuyFill:
-                    orders.Add(buy);
-                    filledSellOrders.push(sell);
+                    filledBuyOrders.push(buy);
                     break;
                 case FillState.SellFill:
-                    filledSellOrders.push(sell);
+                    orders.Add(sell);
+                    filledBuyOrders.push(buy);
                     break;
                 case FillState.BothFill:
-                    filledSellOrders.push(sell);
-                    orders.Add(buy);
+                    filledBuyOrders.push(buy);
+                    orders.Add(sell);
                     break;
                 default: break;
             }
 
         }
 
-        if (buy.ExecutionType == ExecutionType.IoC && buy.RemainingQuantity > 0) {
-            filledSellOrders.forEach(element => {
+        if (sell.ExecutionType == ExecutionType.IoC && sell.RemainingQuantity > 0) {
+            filledBuyOrders.forEach(element => {
                 element.fills.pop();
             });
-            filledSellOrders = [];
-            buy.fills = [];
-            orders.CancelOrders.push(buy);
-            buy.Status = OrderStatus.Cancelled;
+            filledBuyOrders = [];
+            sell.fills = [];
+            orders.CancelOrders.push(sell);
+            sell.Status = OrderStatus.Cancelled;
         }
-        this.NotifyStocks(buy, filledSellOrders);
-        if (buy.fills.length > 0) {
-            orders.ShiftSellToMatch(filledSellOrders.filter(o => o.RemainingQuantity === 0));
-            this.marketDataService.Change(buy.Symbol, PriceType.Last, filledSellOrders.pop().Price);
+        this.NotifyStocks(sell, filledBuyOrders);
+        if (sell.fills.length > 0) {
+            orders.ShiftBuyToMatch(filledBuyOrders.filter(o => o.RemainingQuantity === 0));
+            this.marketDataService.Change(sell.Symbol, PriceType.Last, filledBuyOrders.pop().Price);
         }
         else{
-            orders.BuyOrders.push(buy);
+            orders.SellOrders.push(sell);
         }
     }
 
     FillOrder(buy: Order, sell: Order, last: number): FillState {
         let fillState: FillState = FillState.NoFill
-        if (sell.RemainingQuantity == 0)
+        if (buy.RemainingQuantity == 0)
             return fillState;
         let price: number = -1;
-        if (sell.OrderType == OrderType.Specific || sell.OrderType == OrderType.Limit)
-            price = sell.Price;
+        if (buy.OrderType == OrderType.Specific || buy.OrderType == OrderType.Limit)
+            price = buy.Price;
         else
             price = last;
         let f: Fill = new Fill();
@@ -112,5 +114,3 @@ export class BuyAlgorithm {
     }
 
 }
-
-export enum FillState { NoFill, BuyFill, SellFill, BothFill };

@@ -1,4 +1,4 @@
-import {OrderList} from './OrderList'
+import {OrderList} from './../Matching/OrderList'
 import { IQuote, Order, OrderType, ExecutionType, Fill } from './../../Client/Shared/Entities/Quote';
 import { IMarketData, MarketData } from './../../Client/Shared/Entities/MarketData';
 import { ServerSocketService } from './../ServerSocketService'
@@ -17,8 +17,8 @@ export class MarketDataService {
         this.SymbolMarketData = {};
         data.forEach(element => {
             let md: MarketData = new MarketData();
-            md.Ask = element.Ask;
-            md.Bid = element.Bid;
+            md.Ask = Number.NaN;
+            md.Bid = Number.NaN;
             md.Last = element.Last;
             this.SymbolMarketData[element.Symbol] = md;
         });
@@ -49,6 +49,33 @@ export class MarketDataService {
     LastPrice(symbol: string): number {
         return this.SymbolMarketData[symbol].Last;
     }
+
+    RecalculateAsk = (symbol: string, orderList: OrderList) => {
+        let ask: number = Number.POSITIVE_INFINITY;
+        orderList.SellOrders.forEach(element => {
+            if (element.OrderType == OrderType.Specific && ask > element.Price) {
+                ask = element.Price;
+            }
+        });
+        if (orderList.SellOrders.length === 0) {
+            ask = Number.NaN;
+        }
+        this.Change(symbol, PriceType.Ask, ask);
+    }
+
+    RecalculateBid = (symbol: string, orderList: OrderList) => {
+        let bid: number = Number.NEGATIVE_INFINITY;
+        orderList.BuyOrders.forEach(element => {
+            if (element.OrderType == OrderType.Specific && bid < element.Price) {
+                bid = element.Price;
+            }
+        });
+        if (orderList.BuyOrders.length === 0) {
+            bid = Number.NaN;
+        }
+        this.Change(symbol, PriceType.Bid, bid);
+    }
+
 
     SendMarketDataTo(socketId: string) {
         for (var symbol in this.SymbolMarketData) {

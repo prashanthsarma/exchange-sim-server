@@ -1,7 +1,6 @@
 [
-    {"Symbol": "TCS", "Last": 2500, "Bid": 2490, "Ask": 2510},
-    {"Symbol": "INFY", "Last": 1080, "Bid": 1075, "Ask": 1085},
-    {"Symbol": "WIPRO", "Last": 550, "Bid": 547, "Ask": 553},
-    {"Symbol": "TECHM", "Last": 500, "Bid": 498, "Ask": 502},
-    {"Symbol": "HCLTECH", "Last": 830, "Bid": 825, "Ask": 835}
-    ]
+    {
+        "Symbol": "TCS",
+        "Last": 2500
+    }
+]

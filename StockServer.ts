@@ -30,12 +30,12 @@ export class StockServer {
     }
 
     OnMessageReceived(eMsg: IEventMessage) {
-        if(eMsg.MessageType !== 'login' && this.Clients[eMsg.SocketId]===undefined){
-            this.SocketService.SendMessage(eMsg.SocketId,'relogin',null);
+        if (eMsg.MessageType !== 'login' && this.Clients[eMsg.SocketId] === undefined) {
+            this.SocketService.SendMessage(eMsg.SocketId, 'relogin', null);
             return;
         }
-        else{
-            
+        else {
+
         }
         switch (eMsg.MessageType) {
             case 'login':
@@ -46,6 +46,9 @@ export class StockServer {
                 break;
             case 'quote':
                 this.OnQuoteReceived(eMsg);
+                break;
+            case 'CancelOrder':
+                this.OnCancelReceived(eMsg);
                 break;
             default:
                 break;
@@ -85,6 +88,11 @@ export class StockServer {
         }
     }
 
+    OnCancelReceived = (eMsg: IEventMessage) => {
+        let cancel: { Id: number, Symbol: string } = JSON.parse(eMsg.Message);
+        this.matcher.CancelOrder(cancel);
+    }
+
     OnGetOrdersReceived = (eMsg: IEventMessage) => {
         let user = this.Clients[eMsg.SocketId].User;
         let orders: Order[] = [];
@@ -98,7 +106,7 @@ export class StockServer {
             this.SendMessage(user, 'GetOrdersResponse', orders);
         }, 0);
 
-         setTimeout(() => {
+        setTimeout(() => {
             this.marketDataService.SendMarketDataTo(eMsg.SocketId);
         }, 0);
 
@@ -139,4 +147,7 @@ var server: StockServer = new StockServer(socketService, marketDataService);
 server.Start();
 
 
-
+ //  {"Symbol": "INFY", "Last": 1080},
+  //  {"Symbol": "WIPRO", "Last": 550},
+  //  {"Symbol": "TECHM", "Last": 500},
+  //  {"Symbol": "HCLTECH", "Last": 830}

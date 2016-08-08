@@ -50,6 +50,7 @@ export class ServerSocketService {
             socket.on('login', (msg: string) => { this.RaiseEvent('login', msg, socketId); });
             socket.on('quote', (msg: string) => { this.RaiseEvent('quote', msg, socketId); });
             socket.on('GetOrders', (msg: string) => { this.RaiseEvent('GetOrders', msg, socketId); });
+            socket.on('CancelOrder', (msg: string) => { this.RaiseEvent('CancelOrder', msg, socketId); });
 
             socket.on('disconnect', function () { console.log('user disconnected');});
             });
