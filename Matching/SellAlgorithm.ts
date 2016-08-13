@@ -1,5 +1,6 @@
 import { IQuote, Order, OrderType, ExecutionType, Fill, OrderStatus } from './../../Client/Shared/Entities/Quote';
 import {MarketDataService, PriceType} from './../MarketDataService/MarketDataService'
+import {PositionDataService} from './../PositionDataService/PositionDataService'
 import {OrderList} from './OrderList'
 import {Sorter} from './Sorter'
 import {FillState} from './BuyAlgorithm'
@@ -7,9 +8,14 @@ import {StockServer} from './../StockServer'
 
 export class SellAlgorithm {
     marketDataService: MarketDataService;
+    positionDataService: PositionDataService
     stockServer: StockServer;
 
-    constructor(marketDataService: MarketDataService, stockServer: StockServer) {
+    constructor(marketDataService: MarketDataService,
+        positionDataService: PositionDataService,
+        stockServer: StockServer) {
+
+        this.positionDataService = positionDataService;
         this.marketDataService = marketDataService;
         this.stockServer = stockServer;
     }
@@ -58,7 +64,9 @@ export class SellAlgorithm {
             orders.CancelOrders.push(sell);
             sell.Status = OrderStatus.Cancelled;
         }
-        this.NotifyStocks(sell, filledBuyOrders);
+
+        setTimeout(() => { this.NotifyStocks(sell, filledBuyOrders); }, 0);
+
         if (sell.fills.length > 0) {
             orders.ShiftBuyToMatch(filledBuyOrders.filter(o => o.RemainingQuantity === 0));
             this.marketDataService.Change(sell.Symbol, PriceType.Last, filledBuyOrders.pop().Price);
@@ -119,13 +127,26 @@ export class SellAlgorithm {
     }
 
 
-    NotifyStocks = (buy: Order, filledSellOrders: Order[]) => {
-        this.stockServer.SendUpdate(buy);
-        filledSellOrders.forEach(element => {
+    NotifyStocks = (order: Order, filledOrders: Order[]) => {
+        this.stockServer.SendUpdate(order);
+        let isFilled: boolean = filledOrders.length > 1;
+        if (isFilled) {
+            order.fills.forEach(fill => {
+                this.positionDataService.UpdateFill(order.User,
+                    order.Symbol,
+                    order.Side,
+                    fill.Quantity);
+            });
+        }
+
+        filledOrders.forEach(element => {
             this.stockServer.SendUpdate(element);
+            this.positionDataService.UpdateFill(element.User,
+                element.Symbol,
+                element.Side,
+                element.fills[element.fills.length - 1].Quantity);
         });
 
 
     }
-
 }

@@ -7,24 +7,30 @@ import { LoginResponse } from './../Client/Shared/Responses/LoginResponse';
 import { ClientData } from './Entities/ClientData';
 import { MatchingService } from './Matching/MatchingService';
 import { MarketDataService } from './MarketDataService/MarketDataService';
+import { PositionDataService } from './PositionDataService/PositionDataService';
 import { IEventMessage, ServerSocketService } from './ServerSocketService';
 
 
 
 export class StockServer {
-    Clients: { [SocketId: string]: ClientData };
-    Users: string[] = new Array<string>();
-    UserToSocketIdMap: { [User: string]: string };
-    SocketService: ServerSocketService;
-    marketDataService: MarketDataService;
-    matcher: MatchingService;
+    private Clients: { [SocketId: string]: ClientData };
+    private Users: string[] = new Array<string>();
+    private UserToSocketIdMap: { [User: string]: string };
+    private SocketService: ServerSocketService;
+    private marketDataService: MarketDataService;
+    private positionDataService: PositionDataService
+    private matcher: MatchingService;
     private runningId: number = 0;
 
-    constructor(socketService: ServerSocketService, marketDataService: MarketDataService) {
+    constructor(socketService: ServerSocketService,
+        marketDataService: MarketDataService,
+        positionDataService: PositionDataService) {
+
         this.SocketService = socketService;
         this.marketDataService = marketDataService;
+        this.positionDataService = positionDataService;
         this.SocketService.OnMessage.on((a) => this.OnMessageReceived(a))
-        this.matcher = new MatchingService(marketDataService, this);
+        this.matcher = new MatchingService(this.marketDataService, this.positionDataService, this);
         this.Clients = {};
         this.UserToSocketIdMap = {};
     }
@@ -50,6 +56,9 @@ export class StockServer {
             case 'CancelOrder':
                 this.OnCancelReceived(eMsg);
                 break;
+            case 'GetPositions':
+                this.OnGetPositionsReceived(eMsg);
+                break;
             default:
                 break;
         }
@@ -66,14 +75,21 @@ export class StockServer {
         clientData.User = c.User;
         clientData.Type = c.Type;
 
-        this.ValidateUser(c.User, eMsg.SocketId);
-
-        this.Clients[clientData.SocketId] = clientData;
-        this.UserToSocketIdMap[c.User] = eMsg.SocketId;
         let loginResp: LoginResponse = new LoginResponse();
-        loginResp.Status = 'success';
-        loginResp.ConnectionId = clientData.SocketId;
-        loginResp.User = clientData.User;
+
+        if (this.ValidateUser(c.User, eMsg.SocketId)) {
+
+            this.Clients[clientData.SocketId] = clientData;
+            this.UserToSocketIdMap[c.User] = eMsg.SocketId;
+
+            loginResp.Status = 'success';
+            loginResp.ConnectionId = clientData.SocketId;
+            loginResp.User = clientData.User;
+            this.positionDataService.InitUser(clientData.User);
+        }
+        else {
+            loginResp.Status = 'failure';
+        }
         this.SendMessage(c.User, 'loginStatus', loginResp);
     }
 
@@ -112,18 +128,26 @@ export class StockServer {
 
     }
 
+    OnGetPositionsReceived = (eMsg: IEventMessage) => {
+        let user = this.Clients[eMsg.SocketId].User;
+        let data = this.positionDataService.GetPositions(user);
+        this.SocketService.SendMessage(eMsg.SocketId, 'Positions', data);
+    }
+
+
+
     ValidateUser(user: string, originSocketId: string): boolean {
-        if (user === null || user === undefined)
-            this.SocketService.SendMessage(originSocketId, 'relogin', 'Login Failed.' )
-            return false;
-            let socketId = this.UserToSocketIdMap[user];
-        if (socketId === undefined)
-            return true;
-        else{
-            this.SocketService.SendMessage(socketId, 'relogin', 'Session has been disconnected as you have logged in elsewhere' )
+        if (user === null || user === undefined) {
+            this.SocketService.SendMessage(originSocketId, 'relogin', 'Login Failed.')
             return false;
         }
-        return false;
+        let socketId = this.UserToSocketIdMap[user];
+        if (socketId === undefined)
+            return true;
+        else {
+            this.SocketService.SendMessage(socketId, 'relogin', 'Session has been disconnected as you have logged in elsewhere')
+            return true;
+        }
     }
 
     Start() {
@@ -149,7 +173,8 @@ export class StockServer {
 
 var socketService: ServerSocketService = new ServerSocketService();
 var marketDataService = new MarketDataService(socketService);
-var server: StockServer = new StockServer(socketService, marketDataService);
+var positionDataService = new PositionDataService(marketDataService);
+var server: StockServer = new StockServer(socketService, marketDataService, positionDataService);
 server.Start();
 
 

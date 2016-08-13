@@ -3,15 +3,15 @@ import { Side, ClientType } from './../../Client/Shared/Entities/Enums';
 import { BuyAlgorithm } from './BuyAlgorithm';
 import { SellAlgorithm } from './SellAlgorithm';
 import {MarketDataService} from './../MarketDataService/MarketDataService'
+import {PositionDataService} from './../PositionDataService/PositionDataService'
 import {OrderList} from './OrderList'
-import {StockDataUpdater} from './StockDataUpdater'
 import { StockServer } from './../StockServer';
 
 
 
 export class MatchingService {
     marketDataService: MarketDataService;
-    stockDataUpdater: StockDataUpdater;
+    positionDataService: PositionDataService;
     buyAlgo: BuyAlgorithm;
     sellAlgo: SellAlgorithm;
     stockServer: StockServer;
@@ -19,11 +19,12 @@ export class MatchingService {
 
     SymbolOrdersMap: OrderList[];
 
-    constructor(marketDataService: MarketDataService, stockServer: StockServer) {
+    constructor(marketDataService: MarketDataService, positionDataService: PositionDataService, stockServer: StockServer) {
         this.marketDataService = marketDataService;
+        this.positionDataService = positionDataService;
         this.stockServer = stockServer;
-        this.buyAlgo = new BuyAlgorithm(this.marketDataService, this.stockServer);
-        this.sellAlgo = new SellAlgorithm(this.marketDataService, this.stockServer);
+        this.buyAlgo = new BuyAlgorithm(this.marketDataService, this.positionDataService, this.stockServer);
+        this.sellAlgo = new SellAlgorithm(this.marketDataService, this.positionDataService, this.stockServer);
         this.SymbolOrdersMap = new Array<OrderList>();
     }
 
@@ -65,6 +66,10 @@ export class MatchingService {
                 break;
         }
             this.stockServer.SendUpdate(o);
+            setTimeout(() => {
+                this.positionDataService.UpdateNewOrder(o.User, o.Symbol, o.Side,o.Quantity);
+            }, 0);
+            
     }
 
     CancelOrder(cancel: { Id: number, Symbol: string }) {
@@ -95,6 +100,7 @@ export class MatchingService {
     }
 
     Cancel(order: Order) {
+        let cancelQuantity = order.Quantity - order.FillQuantity;
         order.Quantity = order.FillQuantity;
         if (order.Quantity > 0) {
             order.Status = OrderStatus.Modified;
@@ -103,6 +109,9 @@ export class MatchingService {
             order.Status = OrderStatus.Cancelled;
         }
         this.stockServer.SendUpdate(order);
+        setTimeout(() => {
+            this.positionDataService.CancelOrder(order.User, order.Symbol,order.Side,cancelQuantity);
+        }, 0);
     }
 
 

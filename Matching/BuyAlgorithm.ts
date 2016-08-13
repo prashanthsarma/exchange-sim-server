@@ -1,20 +1,27 @@
 import { IQuote, Order, OrderType, ExecutionType, Fill, OrderStatus } from './../../Client/Shared/Entities/Quote';
 import {MarketDataService, PriceType} from './../MarketDataService/MarketDataService'
+import {PositionDataService} from './../PositionDataService/PositionDataService'
 import {OrderList} from './OrderList'
 import {Sorter} from './Sorter'
 import {StockServer} from './../StockServer'
 
 export class BuyAlgorithm {
     marketDataService: MarketDataService;
+    positionDataService: PositionDataService
     stockServer: StockServer;
 
-    constructor(marketDataService: MarketDataService, stockServer: StockServer) {
+    constructor(marketDataService: MarketDataService,
+        positionDataService: PositionDataService,
+        stockServer: StockServer) {
+
+        this.positionDataService = positionDataService;
         this.marketDataService = marketDataService;
         this.stockServer = stockServer;
     }
 
     RunMatching(buy: Order, orders: OrderList) {
         console.log('Run Buy Matching for: ' + buy.Id + ' User: ' + buy.User);
+        let fillQuantity = 0;
         let last: number = this.marketDataService.LastPrice(buy.Symbol);
         let filledSellOrders: Order[] = new Array<Order>();
         if (orders.IsSellSortRequired) {
@@ -56,10 +63,12 @@ export class BuyAlgorithm {
             orders.CancelOrders.push(buy);
             buy.Status = OrderStatus.Cancelled;
         }
-        this.NotifyStocks(buy, filledSellOrders);
+
+        setTimeout(() => { this.NotifyStocks(buy, filledSellOrders); }, 0);
+
         if (buy.fills.length > 0) {
             orders.ShiftSellToMatch(filledSellOrders.filter(o => o.RemainingQuantity === 0));
-            this.marketDataService.Change(buy.Symbol, PriceType.Last, filledSellOrders.pop().Price);
+            this.marketDataService.Change(buy.Symbol, PriceType.Last, filledSellOrders.pop().Price);//Note the pop here
         }
         else {
             orders.BuyOrders.push(buy);
@@ -119,8 +128,22 @@ export class BuyAlgorithm {
 
     NotifyStocks = (order: Order, filledOrders: Order[]) => {
         this.stockServer.SendUpdate(order);
+        let isFilled: boolean = filledOrders.length > 1;
+        if (isFilled) {
+            order.fills.forEach(fill => {
+                this.positionDataService.UpdateFill(order.User,
+                    order.Symbol,
+                    order.Side,
+                    fill.Quantity);
+            });
+        }
+
         filledOrders.forEach(element => {
             this.stockServer.SendUpdate(element);
+            this.positionDataService.UpdateFill(element.User,
+                element.Symbol,
+                element.Side,
+                element.fills[element.fills.length - 1].Quantity);
         });
 
 
