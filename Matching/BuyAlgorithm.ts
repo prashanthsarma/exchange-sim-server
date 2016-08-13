@@ -14,18 +14,19 @@ export class BuyAlgorithm {
     }
 
     RunMatching(buy: Order, orders: OrderList) {
+        console.log('Run Buy Matching for: ' + buy.Id + ' User: ' + buy.User);
         let last: number = this.marketDataService.LastPrice(buy.Symbol);
         let filledSellOrders: Order[] = new Array<Order>();
         if (orders.IsSellSortRequired) {
             Sorter.SortAscending(orders.SellOrders, last);
-           // orders.IsSellSortRequired = false;
+            // orders.IsSellSortRequired = false;
         }
 
         for (let i = 0; i < orders.SellOrders.length && buy.RemainingQuantity > 0; i++) {
             let sell = orders.SellOrders[i];
-            if (buy.OrderType !== OrderType.Market && buy.Price > sell.Price)
-                break;
-            if(buy.OrderType == OrderType.Specific && sell.OrderType === OrderType.Specific)
+            if (buy.OrderType !== OrderType.Market && sell.OrderType !== OrderType.Market && buy.Price < sell.Price)
+                continue;
+            if (buy.OrderType == OrderType.Specific && sell.OrderType === OrderType.Specific)
                 continue;
 
             let fillState: FillState = this.FillOrder(buy, sell, last);
@@ -60,20 +61,33 @@ export class BuyAlgorithm {
             orders.ShiftSellToMatch(filledSellOrders.filter(o => o.RemainingQuantity === 0));
             this.marketDataService.Change(buy.Symbol, PriceType.Last, filledSellOrders.pop().Price);
         }
-        else{
+        else {
             orders.BuyOrders.push(buy);
         }
     }
 
     FillOrder(buy: Order, sell: Order, last: number): FillState {
         let fillState: FillState = FillState.NoFill
-        if (sell.RemainingQuantity == 0)
+        if (buy.RemainingQuantity === 0 || sell.RemainingQuantity === 0)
             return fillState;
         let price: number = -1;
-        if (sell.OrderType == OrderType.Specific || sell.OrderType == OrderType.Limit)
+        if (buy.OrderType === OrderType.Market && sell.OrderType != OrderType.Market) {
             price = sell.Price;
-        else
+        }
+        else if (sell.OrderType === OrderType.Market && buy.OrderType != OrderType.Market) {
+            price = buy.Price;
+        }
+        else if (buy.OrderType === OrderType.Specific) {
+            price = buy.Price;
+        }
+        else if (sell.OrderType === OrderType.Specific)
+            price = sell.Price;
+        else if (buy.OrderType === OrderType.Limit && sell.OrderType === OrderType.Limit) {
+            price == sell.Price;
+        }
+        else {
             price = last;
+        }
         let f: Fill = new Fill();
 
         if (buy.RemainingQuantity > sell.RemainingQuantity) {
@@ -90,6 +104,7 @@ export class BuyAlgorithm {
             sell.Status = OrderStatus.PartialFill;
             buy.Status = OrderStatus.Fill;
         }
+        console.log('Match found, Buy: ' + buy.Id + ', Sell: ' + sell.Id);
         buy.fills.push(f);
         sell.fills.push(f);
         if (buy.RemainingQuantity == 0 && sell.RemainingQuantity == 0) {
@@ -102,9 +117,9 @@ export class BuyAlgorithm {
     }
 
 
-    NotifyStocks = (buy: Order, filledSellOrders: Order[]) => {
-        this.stockServer.SendUpdate(buy);
-        filledSellOrders.forEach(element => {
+    NotifyStocks = (order: Order, filledOrders: Order[]) => {
+        this.stockServer.SendUpdate(order);
+        filledOrders.forEach(element => {
             this.stockServer.SendUpdate(element);
         });
 

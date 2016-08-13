@@ -43,4 +43,18 @@ export class Sorter {
         });
 
     }
+
+    static SortDescending = (orders: Order[], last: number) => {
+        orders.forEach(element => {
+            if (element.OrderType === OrderType.Market)
+                element.Price = last;
+        });
+        orders.sort((a: Order, b: Order): number => {
+            return Sorter.compareAscending(a,b, (o:Order)=> o.Timestamp.getTime()); 
+        });
+        orders.sort((a: Order, b: Order): number => {
+            return Sorter.compareDescending(a,b, (o:Order)=> o.Price); 
+        });
+
+    }
 }

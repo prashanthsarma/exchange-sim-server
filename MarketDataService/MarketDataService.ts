@@ -53,7 +53,7 @@ export class MarketDataService {
     RecalculateAsk = (symbol: string, orderList: OrderList) => {
         let ask: number = Number.POSITIVE_INFINITY;
         orderList.SellOrders.forEach(element => {
-            if (element.OrderType == OrderType.Specific && ask > element.Price) {
+            if (element.OrderType !== OrderType.Market && ask > element.Price) {
                 ask = element.Price;
             }
         });
@@ -66,7 +66,7 @@ export class MarketDataService {
     RecalculateBid = (symbol: string, orderList: OrderList) => {
         let bid: number = Number.NEGATIVE_INFINITY;
         orderList.BuyOrders.forEach(element => {
-            if (element.OrderType == OrderType.Specific && bid < element.Price) {
+            if (element.OrderType !== OrderType.Market && bid < element.Price) {
                 bid = element.Price;
             }
         });

@@ -37,7 +37,7 @@ export class ServerSocketService {
     }
 
     RaiseEvent(type: string, message: string, socketId: string) {
-        console.log('SocketId: ' + socketId + 'Type: ' + type + 'Message: ' + message);
+        //console.log('SocketId: ' + socketId + 'Type: ' + type + 'Message: ' + message);
         let eMsg: IEventMessage = { MessageType: type, Message: message, SocketId: socketId };
         this.onMessage.trigger(eMsg);
     }

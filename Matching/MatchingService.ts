@@ -64,9 +64,7 @@ export class MatchingService {
                 }, 0);
                 break;
         }
-        setTimeout(() => {
             this.stockServer.SendUpdate(o);
-        }, 0);
     }
 
     CancelOrder(cancel: { Id: number, Symbol: string }) {

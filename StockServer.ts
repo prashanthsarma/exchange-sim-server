@@ -31,7 +31,7 @@ export class StockServer {
 
     OnMessageReceived(eMsg: IEventMessage) {
         if (eMsg.MessageType !== 'login' && this.Clients[eMsg.SocketId] === undefined) {
-            this.SocketService.SendMessage(eMsg.SocketId, 'relogin', null);
+            this.SocketService.SendMessage(eMsg.SocketId, 'relogin', 'Connection lost, please try logging again.');
             return;
         }
         else {
@@ -66,7 +66,7 @@ export class StockServer {
         clientData.User = c.User;
         clientData.Type = c.Type;
 
-        this.ValidateUser(c.User);
+        this.ValidateUser(c.User, eMsg.SocketId);
 
         this.Clients[clientData.SocketId] = clientData;
         this.UserToSocketIdMap[c.User] = eMsg.SocketId;
@@ -112,11 +112,17 @@ export class StockServer {
 
     }
 
-    ValidateUser(user: string): boolean {
-        if (user == null || user == undefined)
+    ValidateUser(user: string, originSocketId: string): boolean {
+        if (user === null || user === undefined)
+            this.SocketService.SendMessage(originSocketId, 'relogin', 'Login Failed.' )
             return false;
-        else if (this.Users.indexOf(user) == -1)
+            let socketId = this.UserToSocketIdMap[user];
+        if (socketId === undefined)
             return true;
+        else{
+            this.SocketService.SendMessage(socketId, 'relogin', 'Session has been disconnected as you have logged in elsewhere' )
+            return false;
+        }
         return false;
     }
 
@@ -147,7 +153,8 @@ var server: StockServer = new StockServer(socketService, marketDataService);
 server.Start();
 
 
- //  {"Symbol": "INFY", "Last": 1080},
-  //  {"Symbol": "WIPRO", "Last": 550},
-  //  {"Symbol": "TECHM", "Last": 500},
-  //  {"Symbol": "HCLTECH", "Last": 830}
+//       {"Symbol": "INFY", "Last": 1080},
+//    {"Symbol": "WIPRO", "Last": 550},
+//    {"Symbol": "TECHM", "Last": 500},
+//    {"Symbol": "HCLTECH", "Last": 830}
+// ]
