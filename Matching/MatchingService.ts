@@ -67,7 +67,7 @@ export class MatchingService {
         }
             this.stockServer.SendUpdate(o);
             setTimeout(() => {
-                this.positionDataService.UpdateNewOrder(o.User, o.Symbol, o.Side,o.Quantity);
+                this.positionDataService.UpdateNewOrder(o);
             }, 0);
             
     }
@@ -101,16 +101,16 @@ export class MatchingService {
 
     Cancel(order: Order) {
         let cancelQuantity = order.Quantity - order.FillQuantity;
-        order.Quantity = order.FillQuantity;
-        if (order.Quantity > 0) {
+        if (order.FillQuantity > 0) {
             order.Status = OrderStatus.Modified;
+            order.Quantity = order.FillQuantity;
         }
         else {
             order.Status = OrderStatus.Cancelled;
         }
         this.stockServer.SendUpdate(order);
         setTimeout(() => {
-            this.positionDataService.CancelOrder(order.User, order.Symbol,order.Side,cancelQuantity);
+            this.positionDataService.CancelOrder(order);
         }, 0);
     }
 

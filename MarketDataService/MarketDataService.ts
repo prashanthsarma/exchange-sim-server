@@ -2,7 +2,8 @@ import {OrderList} from './../Matching/OrderList'
 import { IQuote, Order, OrderType, ExecutionType, Fill } from './../../Client/Shared/Entities/Quote';
 import { IMarketData, MarketData } from './../../Client/Shared/Entities/MarketData';
 import { ServerSocketService } from './../ServerSocketService'
-import * as fs from'fs'
+import { Config } from './../Config'
+
 
 
 
@@ -11,9 +12,9 @@ export enum PriceType { Ask, Bid, Last, PreviousClose, Open }
 export class MarketDataService {
     private SymbolMarketData: { [Symbol: string]: MarketData };
     socketService: ServerSocketService
-    constructor(socketService: ServerSocketService) {
+    constructor(config: Config, socketService: ServerSocketService) {
         this.socketService = socketService;
-        let data: IMarketData[] = JSON.parse(fs.readFileSync('./Symbol.json', 'utf8'));
+        let data: IMarketData[] = config.ClientConfig.Symbols;
         this.SymbolMarketData = {};
         data.forEach(element => {
             let md: MarketData = new MarketData();

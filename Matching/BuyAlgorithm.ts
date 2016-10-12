@@ -68,11 +68,11 @@ export class BuyAlgorithm {
 
         if (buy.fills.length > 0) {
             orders.ShiftSellToMatch(filledSellOrders.filter(o => o.RemainingQuantity === 0));
-            this.marketDataService.Change(buy.Symbol, PriceType.Last, filledSellOrders.pop().Price);//Note the pop here
+            let lastSellOrder = filledSellOrders[filledSellOrders.length - 1];
+            this.marketDataService.Change(buy.Symbol, PriceType.Last, lastSellOrder.Price);//Note the pop here
         }
-        else {
-            orders.BuyOrders.push(buy);
-        }
+        if(buy.RemainingQuantity > 0)
+            orders.Add(buy);
     }
 
     FillOrder(buy: Order, sell: Order, last: number): FillState {
@@ -128,22 +128,14 @@ export class BuyAlgorithm {
 
     NotifyStocks = (order: Order, filledOrders: Order[]) => {
         this.stockServer.SendUpdate(order);
-        let isFilled: boolean = filledOrders.length > 1;
+        let isFilled: boolean = filledOrders.length > 0;
         if (isFilled) {
-            order.fills.forEach(fill => {
-                this.positionDataService.UpdateFill(order.User,
-                    order.Symbol,
-                    order.Side,
-                    fill.Quantity);
-            });
+                this.positionDataService.UpdateFill(order, false);
         }
 
         filledOrders.forEach(element => {
             this.stockServer.SendUpdate(element);
-            this.positionDataService.UpdateFill(element.User,
-                element.Symbol,
-                element.Side,
-                element.fills[element.fills.length - 1].Quantity);
+            this.positionDataService.UpdateFill(element, true);
         });
 
 

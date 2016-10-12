@@ -31,43 +31,43 @@ export class PositionDataService {
         }
     }
 
-    UpdateNewOrder = (user: string, symbol: string, side: Side, quantity: number) => {
-        let positionDatSet = this.UserPositionDataset[user];
+    UpdateNewOrder = (order: Order) => {
+        let positionDatSet = this.UserPositionDataset[order.User];
 
         let cashData = positionDatSet.Datas['Cash'];
-        let data = positionDatSet.Datas[symbol];
+        let data = positionDatSet.Datas[order.Symbol];
         if (data === undefined) {
             data = new PositionData(0);
-            positionDatSet.Datas[symbol] = data;
+            positionDatSet.Datas[order.Symbol] = data;
         }
-        data.UpdateNewOrder(side, quantity);
-        cashData.UpdateNewOrder(side, quantity);
+        data.UpdateNewOrder(order);
+        cashData.UpdateNewOrder(order);
     }
 
-    UpdateFill = (user: string, symbol: string, side: Side, quantity: number) => {
-        let positionDatSet = this.UserPositionDataset[user];
+    UpdateFill = (order: Order, isOnlyLastFillValid: boolean) => {
+        let positionDatSet = this.UserPositionDataset[order.User];
 
         let cashData = positionDatSet.Datas['Cash'];
-        let data = positionDatSet.Datas[symbol];
+        let data = positionDatSet.Datas[order.Symbol];
         if (data === undefined) {
             console.log('Error accessing non existant position')
             return;
         }
-        data.UpdateFill(side, quantity);
-        cashData.UpdateFill(side, quantity);
+        data.UpdateFillOrder(order, isOnlyLastFillValid);
+        cashData.UpdateFillOrder(order, isOnlyLastFillValid);
     }
 
-    CancelOrder = (user: string, symbol: string, side: Side, quantity: number) => {
-        let positionDatSet = this.UserPositionDataset[user];
+    CancelOrder = (order: Order) => {
+        let positionDatSet = this.UserPositionDataset[order.User];
 
         let cashData = positionDatSet.Datas['Cash'];
-        let data = positionDatSet.Datas[symbol];
+        let data = positionDatSet.Datas[order.Symbol];
         if (data === undefined) {
             console.log('Error accessing non existant position')
             return;
         }
-        data.CancelOrder(side, quantity);
-        cashData.CancelOrder(side, quantity);
+        data.CancelOrder(order);
+        cashData.CancelOrder(order);
     }
 
     GetPositions(user: string): IPositionData[] {

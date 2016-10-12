@@ -9,6 +9,8 @@ import { MatchingService } from './Matching/MatchingService';
 import { MarketDataService } from './MarketDataService/MarketDataService';
 import { PositionDataService } from './PositionDataService/PositionDataService';
 import { IEventMessage, ServerSocketService } from './ServerSocketService';
+import { Config } from './Config';
+
 
 
 
@@ -21,13 +23,18 @@ export class StockServer {
     private positionDataService: PositionDataService
     private matcher: MatchingService;
     private runningId: number = 0;
+    private config: any;
+
+    
 
     constructor(socketService: ServerSocketService,
         marketDataService: MarketDataService,
-        positionDataService: PositionDataService) {
+        positionDataService: PositionDataService,
+        config: Config) {
 
         this.SocketService = socketService;
         this.marketDataService = marketDataService;
+        this.config = config;
         this.positionDataService = positionDataService;
         this.SocketService.OnMessage.on((a) => this.OnMessageReceived(a))
         this.matcher = new MatchingService(this.marketDataService, this.positionDataService, this);
@@ -89,6 +96,9 @@ export class StockServer {
         }
         else {
             loginResp.Status = 'failure';
+        }
+        if(loginResp.Status === 'success'){
+            this.SendMessage(c.User, 'ClientConfig', this.config.ClientConfig);
         }
         this.SendMessage(c.User, 'loginStatus', loginResp);
     }
@@ -170,11 +180,11 @@ export class StockServer {
 
 }
 
-
+var config: Config = new Config();
 var socketService: ServerSocketService = new ServerSocketService();
-var marketDataService = new MarketDataService(socketService);
+var marketDataService = new MarketDataService(config, socketService);
 var positionDataService = new PositionDataService(marketDataService);
-var server: StockServer = new StockServer(socketService, marketDataService, positionDataService);
+var server: StockServer = new StockServer(socketService, marketDataService, positionDataService, config);
 server.Start();
 
 
