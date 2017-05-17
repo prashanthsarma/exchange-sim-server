@@ -24,7 +24,6 @@ export class StockServer {
     private matcher: MatchingService;
     private runningId: number = 0;
     private config: any;
-
     
 
     constructor(socketService: ServerSocketService,
@@ -188,7 +187,7 @@ var server: StockServer = new StockServer(socketService, marketDataService, posi
 server.Start();
 
 
-//       {"Symbol": "INFY", "Last": 1080},
+//    {"Symbol": "INFY", "Last": 1080},
 //    {"Symbol": "WIPRO", "Last": 550},
 //    {"Symbol": "TECHM", "Last": 500},
 //    {"Symbol": "HCLTECH", "Last": 830}
