@@ -1,4 +1,4 @@
-import { Side, ClientType } from '../../Client/Shared/Entities/Enums';
+import { Side, ClientType } from '../../../Client/src/Shared/Entities/Enums';
 
 export class ClientData{
     SocketId:string;

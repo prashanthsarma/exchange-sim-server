@@ -1,10 +1,10 @@
 import {OrderList} from './../Matching/OrderList'
-import { IQuote, Order, OrderType, ExecutionType, Fill } from './../../Client/Shared/Entities/Quote';
-import { IMarketData, MarketData } from './../../Client/Shared/Entities/MarketData';
-import { IPositionData, PositionData, CashPositionData } from './../../Client/Shared/Entities/PositionData';
+import { IQuote, Order, OrderType, ExecutionType, Fill } from './../../../Client/src/Shared/Entities/Quote';
+import { IMarketData, MarketData } from './../../../Client/src/Shared/Entities/MarketData';
+import { IPositionData, PositionData, CashPositionData } from './../../../Client/src/Shared/Entities/PositionData';
 import { ServerSocketService } from './../ServerSocketService'
 import {MarketDataService} from './../MarketDataService/MarketDataService'
-import { Side } from './../../Client/Shared/Entities/Enums';
+import { Side } from './../../../Client/src/Shared/Entities/Enums';
 
 export class PositionDataset {
     Datas: { [Symbol: string]: PositionData };

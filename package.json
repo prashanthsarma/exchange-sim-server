@@ -5,5 +5,8 @@
   "dependencies": {
     "express": "^4.14.1",
     "socket.io": "^1.7.3"
+  },
+  "devDependencies": {
+    "@types/socket.io-client": "^1.4.29"
   }
 }

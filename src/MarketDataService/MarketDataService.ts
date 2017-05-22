@@ -1,6 +1,6 @@
 import {OrderList} from './../Matching/OrderList'
-import { IQuote, Order, OrderType, ExecutionType, Fill } from './../../Client/Shared/Entities/Quote';
-import { IMarketData, MarketData } from './../../Client/Shared/Entities/MarketData';
+import { IQuote, Order, OrderType, ExecutionType, Fill } from './../../../Client/src/Shared/Entities/Quote';
+import { IMarketData, MarketData } from './../../../Client/src/Shared/Entities/MarketData';
 import { ServerSocketService } from './../ServerSocketService'
 import { Config } from './../Config'
 

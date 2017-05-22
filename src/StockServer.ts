@@ -1,8 +1,8 @@
 
-import { ClientDetail } from './../Client/Shared/ClientDetail';
-import { IQuote, Quote, Order, Fill } from './../Client/Shared/Entities/Quote';
-import { Side, ClientType } from './../Client/Shared/Entities/Enums';
-import { LoginResponse } from './../Client/Shared/Responses/LoginResponse';
+import { ClientDetail } from './../../Client/src/Shared/ClientDetail';
+import { IQuote, Quote, Order, Fill } from './../../Client/src/Shared/Entities/Quote';
+import { Side, ClientType } from './../../Client/src/Shared/Entities/Enums';
+import { LoginResponse } from './../../Client/src/Shared/Responses/LoginResponse';
 
 import { ClientData } from './Entities/ClientData';
 import { MatchingService } from './Matching/MatchingService';
@@ -10,8 +10,6 @@ import { MarketDataService } from './MarketDataService/MarketDataService';
 import { PositionDataService } from './PositionDataService/PositionDataService';
 import { IEventMessage, ServerSocketService } from './ServerSocketService';
 import { Config } from './Config';
-
-
 
 
 export class StockServer {

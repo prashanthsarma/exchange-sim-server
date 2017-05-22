@@ -1,5 +1,5 @@
-import { IQuote, Order, Fill, OrderType, OrderStatus } from './../../Client/Shared/Entities/Quote';
-import { Side, ClientType } from './../../Client/Shared/Entities/Enums';
+import { IQuote, Order, Fill, OrderType, OrderStatus } from './../../../Client/src/Shared/Entities/Quote';
+import { Side, ClientType } from './../../../Client/src/Shared/Entities/Enums';
 import { BuyAlgorithm } from './BuyAlgorithm';
 import { SellAlgorithm } from './SellAlgorithm';
 import {MarketDataService} from './../MarketDataService/MarketDataService'

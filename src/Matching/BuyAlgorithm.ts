@@ -1,4 +1,4 @@
-import { IQuote, Order, OrderType, ExecutionType, Fill, OrderStatus } from './../../Client/Shared/Entities/Quote';
+import { IQuote, Order, OrderType, ExecutionType, Fill, OrderStatus } from './../../../Client/src/Shared/Entities/Quote';
 import {MarketDataService, PriceType} from './../MarketDataService/MarketDataService'
 import {PositionDataService} from './../PositionDataService/PositionDataService'
 import {OrderList} from './OrderList'

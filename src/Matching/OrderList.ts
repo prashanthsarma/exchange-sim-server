@@ -1,5 +1,5 @@
-import { IQuote, Order, Fill, OrderType } from './../../Client/Shared/Entities/Quote';
-import { Side } from './../../Client/Shared/Entities/Enums';
+import { IQuote, Order, Fill, OrderType } from './../../../Client/src/Shared/Entities/Quote';
+import { Side } from './../../../Client/src/Shared/Entities/Enums';
 
 export class OrderList {
     Symbol: string;

@@ -1,5 +1,5 @@
 
-import { IQuote, Order, OrderType, ExecutionType, Fill } from './../../Client/Shared/Entities/Quote';
+import { IQuote, Order, OrderType, ExecutionType, Fill } from './../../../Client/src/Shared/Entities/Quote';
 
 export class Sorter {
 
